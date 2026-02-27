@@ -2,7 +2,7 @@
 
 import re
 
-from h2c import IngressRewriter, get_ingress_class, resolve_backend  # pylint: disable=import-error  # h2c resolves at runtime
+from dekube import IngressRewriter, get_ingress_class, resolve_backend  # pylint: disable=import-error  # h2c resolves at runtime
 
 
 def _resolve_backend_ssl(annotations: dict) -> dict:
