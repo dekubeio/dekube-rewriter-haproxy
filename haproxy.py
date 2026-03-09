@@ -7,7 +7,7 @@ from dekube import IngressRewriter, get_ingress_class, resolve_backend  # pylint
 
 def _resolve_backend_ssl(annotations: dict) -> dict:
     """Extract backend SSL settings from haproxy.org annotations."""
-    backend_ssl = annotations.get("haproxy.org/server-ssl", "").lower() == "true"
+    backend_ssl = str(annotations.get("haproxy.org/server-ssl", "")).lower() == "true"
     if not backend_ssl:
         return {"scheme": "http", "server_ca_secret": "", "server_sni": ""}
     server_ca_ref = annotations.get("haproxy.org/server-ca", "")
