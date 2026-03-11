@@ -7,10 +7,10 @@ from dekube import IngressRewriter, get_ingress_class, resolve_backend  # pylint
 
 def _resolve_backend_ssl(annotations: dict) -> dict:
     """Extract backend SSL settings from haproxy.org annotations."""
-    backend_ssl = str(annotations.get("haproxy.org/server-ssl", "")).lower() == "true"
+    backend_ssl = str(annotations.get("haproxy.org/server-ssl") or "").lower() == "true"
     if not backend_ssl:
         return {"scheme": "http", "server_ca_secret": "", "server_sni": ""}
-    server_ca_ref = annotations.get("haproxy.org/server-ca", "")
+    server_ca_ref = annotations.get("haproxy.org/server-ca") or ""
     return {
         "scheme": "https",
         "server_ca_secret": server_ca_ref.split("/")[-1] if server_ca_ref else "",
@@ -28,7 +28,7 @@ class HAProxyRewriter(IngressRewriter):
         cls = get_ingress_class(manifest, ingress_types)
         if cls in ("haproxy", ""):
             return True
-        annotations = manifest.get("metadata", {}).get("annotations") or {}
+        annotations = (manifest.get("metadata") or {}).get("annotations") or {}
         return any(k.startswith("haproxy.org/") for k in annotations)
 
     def rewrite(self, manifest, ctx):
@@ -60,7 +60,7 @@ class HAProxyRewriter(IngressRewriter):
     @staticmethod
     def _extract_strip_prefix(annotations):
         """Extract strip prefix from haproxy.org/path-rewrite annotation."""
-        rewrite = annotations.get("haproxy.org/path-rewrite", "")
+        rewrite = annotations.get("haproxy.org/path-rewrite") or ""
         if rewrite:
             parts = rewrite.split()
             if len(parts) == 2 and parts[1] in (r"/\1", "/$1"):
