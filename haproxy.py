@@ -5,19 +5,6 @@ import re
 from dekube import IngressRewriter, get_ingress_class, resolve_backend  # pylint: disable=import-error  # h2c resolves at runtime
 
 
-def _resolve_backend_ssl(annotations: dict) -> dict:
-    """Extract backend SSL settings from haproxy.org annotations."""
-    backend_ssl = str(annotations.get("haproxy.org/server-ssl") or "").lower() == "true"
-    if not backend_ssl:
-        return {"scheme": "http", "server_ca_secret": "", "server_sni": ""}
-    server_ca_ref = annotations.get("haproxy.org/server-ca") or ""
-    return {
-        "scheme": "https",
-        "server_ca_secret": server_ca_ref.split("/")[-1] if server_ca_ref else "",
-        "server_sni": annotations.get("haproxy.org/server-sni", "") if server_ca_ref else "",
-    }
-
-
 class HAProxyRewriter(IngressRewriter):
     """Rewrite haproxy.org ingress annotations to Caddy entries."""
     name = "haproxy"
@@ -43,7 +30,7 @@ class HAProxyRewriter(IngressRewriter):
                 continue
             for path_entry in (rule.get("http") or {}).get("paths") or []:
                 backend = resolve_backend(path_entry, manifest, ctx)
-                ssl = _resolve_backend_ssl(annotations)
+                ssl = self._resolve_backend_ssl(annotations)
                 path = path_entry.get("path", "/")
                 strip = self._extract_strip_prefix(annotations)
                 if strip and not path.startswith(strip):
@@ -56,6 +43,19 @@ class HAProxyRewriter(IngressRewriter):
                     **ssl,
                 })
         return entries
+
+    @staticmethod
+    def _resolve_backend_ssl(annotations: dict) -> dict:
+        """Extract backend SSL settings from haproxy.org annotations."""
+        backend_ssl = str(annotations.get("haproxy.org/server-ssl") or "").lower() == "true"
+        if not backend_ssl:
+            return {"scheme": "http", "server_ca_secret": "", "server_sni": ""}
+        server_ca_ref = annotations.get("haproxy.org/server-ca") or ""
+        return {
+            "scheme": "https",
+            "server_ca_secret": server_ca_ref.split("/")[-1] if server_ca_ref else "",
+            "server_sni": annotations.get("haproxy.org/server-sni", "") if server_ca_ref else "",
+        }
 
     @staticmethod
     def _extract_strip_prefix(annotations):
