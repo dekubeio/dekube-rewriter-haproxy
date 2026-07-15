@@ -25,13 +25,17 @@ class HAProxyRewriter(IngressRewriter):
         spec = manifest.get("spec") or {}
 
         for rule in spec.get("rules") or []:
-            host = rule.get("host", "")
+            if not rule:
+                continue
+            host = rule.get("host") or ""
             if not host:
                 continue
             for path_entry in (rule.get("http") or {}).get("paths") or []:
+                if not path_entry:
+                    continue
                 backend = resolve_backend(path_entry, manifest, ctx)
                 ssl = self._resolve_backend_ssl(annotations)
-                path = path_entry.get("path", "/")
+                path = path_entry.get("path") or "/"
                 strip = self._extract_strip_prefix(annotations)
                 if strip and not path.startswith(strip):
                     strip = None
@@ -54,7 +58,7 @@ class HAProxyRewriter(IngressRewriter):
         return {
             "scheme": "https",
             "server_ca_secret": server_ca_ref.split("/")[-1] if server_ca_ref else "",
-            "server_sni": annotations.get("haproxy.org/server-sni", "") if server_ca_ref else "",
+            "server_sni": (annotations.get("haproxy.org/server-sni") or "") if server_ca_ref else "",
         }
 
     @staticmethod
