@@ -32,12 +32,22 @@ class HAProxyRewriter(IngressRewriter):
         entries = []
         annotations = (manifest.get("metadata") or {}).get("annotations") or {}
         spec = manifest.get("spec") or {}
+        name = (manifest.get("metadata") or {}).get("name", "?")
 
+        # CBA: entries are keyed by hostname, providers can't express "any host"
+        # — a catch-all needs an entry-format/provider change (Caddy ":80", nginx "_").
+        if spec.get("defaultBackend") or spec.get("backend"):
+            ctx.warnings.append(
+                f"Ingress '{name}': spec.defaultBackend (catch-all) not supported"
+                " — skipped, route it with a host rule instead")
         for rule in spec.get("rules") or []:
             if not rule:
                 continue
             host = rule.get("host") or ""
             if not host:
+                ctx.warnings.append(
+                    f"Ingress '{name}': rule without host (catch-all) not supported"
+                    " — skipped, set a host")
                 continue
             for path_entry in (rule.get("http") or {}).get("paths") or []:
                 if not path_entry:

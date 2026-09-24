@@ -17,6 +17,10 @@ HAProxy ingress annotation rewriter for [dekube](https://dekube.io) — translat
 - `haproxy.org/server-sni` — SNI for backend TLS
 - `haproxy.org/path-rewrite` — strip prefix
 
+## Limitations
+
+- Rules without `host` and `spec.defaultBackend` (catch-all for any host) are skipped with a warning — reverse proxy entries are keyed by hostname.
+
 ## Install
 
 Via [dekube-manager](https://github.com/dekubeio/dekube-manager):
