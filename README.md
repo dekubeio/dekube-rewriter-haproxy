@@ -1,6 +1,6 @@
 # dekube-rewriter-haproxy
 
-HAProxy ingress annotation rewriter for [dekube](https://dekube.io) — translates `haproxy.org/*` Ingress annotations into reverse proxy entries. Also serves as the default fallback rewriter for unclassified Ingress resources.
+HAProxy ingress annotation rewriter for [dekube](https://dekube.io) — translates `haproxy.org/*` Ingress annotations into reverse proxy entries. Also serves as the default fallback rewriter for unclassified Ingress resources — except those carrying `nginx.ingress.kubernetes.io/*` or `traefik.ingress.kubernetes.io/*` annotations, which are left to the matching rewriter.
 
 **The Herald** — one of the Eight Monks, the founding extensions of the helmfile2compose distribution.
 
