@@ -8,24 +8,18 @@ from dekube import IngressRewriter, get_ingress_class, resolve_backend  # pylint
 class HAProxyRewriter(IngressRewriter):
     """Rewrite haproxy.org ingress annotations to Caddy entries."""
     name = "haproxy"
-    # Annotation prefixes of other controllers: a classless Ingress carrying
-    # one of these belongs to that controller's rewriter, not the fallback.
-    FOREIGN_PREFIXES = ("nginx.ingress.kubernetes.io/", "traefik.ingress.kubernetes.io/")
+    # Fallback rewriter: runs after the 1000-priority nginx/traefik rewriters
+    # so they claim their annotated classless Ingresses first.
+    priority = 1100
 
     def match(self, manifest, ctx):
-        """Return True if manifest uses haproxy ingress class or annotations.
-
-        Also the fallback for classless Ingresses, unless they carry another
-        controller's annotations.
-        """
+        """Return True if manifest uses haproxy ingress class or annotations."""
         ingress_types = ctx.config.get("ingress_types") or {}
         cls = get_ingress_class(manifest, ingress_types)
-        if cls == "haproxy":
+        if cls in ("haproxy", ""):
             return True
         annotations = (manifest.get("metadata") or {}).get("annotations") or {}
-        if any(k.startswith("haproxy.org/") for k in annotations):
-            return True
-        return cls == "" and not any(k.startswith(self.FOREIGN_PREFIXES) for k in annotations)
+        return any(k.startswith("haproxy.org/") for k in annotations)
 
     def rewrite(self, manifest, ctx):
         """Rewrite HAProxy ingress manifest to Caddy entries."""
